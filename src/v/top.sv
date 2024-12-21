@@ -4,6 +4,9 @@ module top
     (
         /* verilator lint_off UNUSED */
         input logic clk_i,
+
+        input logic rst_i,
+
         input logic br_result_i, update_en_i, correct_i,
         input logic [31:0] idx_i,
         /* verilator lint_on UNUSED */

@@ -4,6 +4,8 @@ module tage_table
     (
         input logic clk_i,
 
+        input logic rst_i,
+
         input logic br_result_i, update_u_i, dec_u_i, alloc_i, provider_i,
         input logic [`TAGE_IDX_WIDTH-1:0] hash_idx_i,
         input logic [8:0] hash_tag_i,
@@ -24,20 +26,34 @@ module tage_table
     logic u_clear_col;
     
     // Initialize tables
-    initial begin
-        for (int i = 0; i < 2**`TAGE_IDX_WIDTH; i++) begin
-            ctr[i] = 3'b0;
-            tag[i] = 9'b0;
-            u[i]   = 2'b0;
-        end
+    // initial begin
+    //     for (int i = 0; i < 2**`TAGE_IDX_WIDTH; i++) begin
+    //         ctr[i] = 3'b0;
+    //         tag[i] = 9'b0;
+    //         u[i]   = 2'b0;
+    //     end
 
-        u_clear_ctr = 0;
-        u_clear_col = 0;
-    end
+    //     u_clear_ctr = 0;
+    //     u_clear_col = 0;
+    // end
 
     assign new_entry_o = ((ctr[prev_idx] == `TAGE_WEAK_TAKEN || ctr[prev_idx] == `TAGE_WEAK_NOT_TAKEN) && u[prev_idx] == 2'b0);
 
     always_ff @(posedge clk_i) begin
+
+    if (rst_i) begin
+        initial begin
+            for (int i = 0; i < 2**`TAGE_IDX_WIDTH; i++) begin
+                ctr[i] = 3'b0;
+                tag[i] = 9'b0;
+                u[i]   = 2'b0;
+            end
+
+            u_clear_ctr = 0;
+            u_clear_col = 0;
+        end
+    end else begin
+
         if (alloc_i) begin
             // Init ctr to weak correct
             ctr[prev_idx] <= br_result_i ? `TAGE_WEAK_TAKEN : `TAGE_WEAK_NOT_TAKEN;
@@ -80,5 +96,8 @@ module tage_table
             u_clear_col <= ~u_clear_col;
         end else
             u_clear_ctr <= u_clear_ctr + 1;
+
+    end
+
     end
 endmodule

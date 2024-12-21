@@ -21,6 +21,8 @@ module bht
     (
         input logic clk_i,
 
+        input logic rst_i,
+
         input logic br_result_i, update_en_i,
         input logic [`BHT_IDX_WIDTH-1:0] idx_i,
 
@@ -33,12 +35,18 @@ module bht
     logic [1:0] bht_data [2**`BHT_IDX_WIDTH-1:0];
 
     // Initialize data to 00 indicating a strong predict not taken entry
-    initial begin
-        for (int i = 0; i < 2**`BHT_IDX_WIDTH; i++)
-            bht_data[i] = 2'b0;
-    end
+    // initial begin
+    //     for (int i = 0; i < 2**`BHT_IDX_WIDTH; i++)
+    //         bht_data[i] = 2'b0;
+    // end
 
     always_ff @(posedge clk_i) begin
+
+    if (rst_i) begin
+        for (int i = 0; i < 2**`BHT_IDX_WIDTH; i++)
+            bht_data[i] = 2'b0;
+    end else begin
+
         // Update previous entry based on prediction results
         if (prev_idx != idx_i && update_en_i) begin
             if(br_result_i && (bht_data[prev_idx] != 2'b11))
@@ -50,5 +58,7 @@ module bht
         // Output prediction for current entry
         prediction_o <= bht_data[idx_i][1];
         prev_idx <= idx_i;
+    end
+    
     end
 endmodule
