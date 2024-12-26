@@ -42,7 +42,7 @@ module tage_table
     always_ff @(posedge clk_i) begin
 
     if (rst_i) begin
-        initial begin
+        // initial begin
             for (int i = 0; i < 2**`TAGE_IDX_WIDTH; i++) begin
                 ctr[i] = 3'b0;
                 tag[i] = 9'b0;
@@ -51,7 +51,7 @@ module tage_table
 
             u_clear_ctr = 0;
             u_clear_col = 0;
-        end
+        // end
     end else begin
 
         if (alloc_i) begin
