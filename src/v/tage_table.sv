@@ -51,6 +51,12 @@ module tage_table
 
             u_clear_ctr = 0;
             u_clear_col = 0;
+            // Reset additions
+            tag_hit_o = 0;
+            prediction_o = 0;
+            u_o = 0;
+            prev_idx = 0;
+            prev_hash_tag = 0;
         // end
     end else begin
 

@@ -45,6 +45,11 @@ module bht
     if (rst_i) begin
         for (int i = 0; i < 2**`BHT_IDX_WIDTH; i++)
             bht_data[i] = 2'b0;
+        
+
+        // Reset additions
+        prediction_o <= 1'b0;
+        prev_idx <= 0;
     end else begin
 
         // Update previous entry based on prediction results
