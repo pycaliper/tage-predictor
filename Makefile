@@ -27,8 +27,8 @@ btor: $(SV_FILES:src/v/%.sv=btor/%.btor)
 # btor_full_design: $(V_FILES)
 # 	yosys -p "read_verilog $^; hierarchy -check; hierarchy -top top; flatten; proc; opt; memory -nomap; opt; clk2fflogic; write_btor btor/full_design.btor"
 
-btor_full_design: v/full_design.v
-	yosys -p "read_verilog $^; hierarchy -check; hierarchy -top top; proc; opt; memory; flatten; clk2fflogic; write_btor btor/full_design.btor"
+btor_full_design: $(V_FILES)
+	yosys -p "read_verilog $^; hierarchy -top top; hierarchy -check; proc; opt; memory; flatten; clk2fflogic; write_btor btor/full_design.btor"
 
 
 clean:

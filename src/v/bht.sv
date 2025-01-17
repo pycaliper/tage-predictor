@@ -75,19 +75,20 @@ module bht
 
         // Update previous entry based on prediction results
         if (prev_idx != idx_i && update_en_i) begin
-            if(br_result_i && (bht_data[prev_idx] != 2'b11)) begin
-                if (prev_domain == PRIV) begin
-                    // bht_data[prev_idx] <= bht_data[prev_idx] + 1;
-                    bht_data_priv[prev_idx] <= bht_data_priv[prev_idx] + 1;
+            if (prev_domain == PRIV) begin
+                if(br_result_i) begin
+                    if (bht_data_priv[prev_idx] != 2'b11) 
+                        bht_data_priv[prev_idx] <= bht_data_priv[prev_idx] + 1;
                     bht_targ_priv[prev_idx] <= prev_targ;
-                end else begin
-                    bht_data_user[prev_idx] <= bht_data_user[prev_idx] + 1;
-                    bht_targ_user[prev_idx] <= prev_targ;
-                end
-            end else if(~br_result_i && (bht_data[prev_idx] != 2'b0)) begin
-                if (prev_domain == PRIV) begin
+                end else if(~br_result_i && (bht_data_priv[prev_idx] != 2'b0)) begin
                     bht_data_priv[prev_idx] <= bht_data_priv[prev_idx] - 1;
-                end else begin
+                end    
+            end else if (prev_domain == USER) begin
+                if(br_result_i) begin
+                    if (bht_data_user[prev_idx] != 2'b11)
+                        bht_data_user[prev_idx] <= bht_data_user[prev_idx] + 1;
+                    bht_targ_user[prev_idx] <= prev_targ;
+                end else if(~br_result_i && (bht_data_user[prev_idx] != 2'b0)) begin
                     bht_data_user[prev_idx] <= bht_data_user[prev_idx] - 1;
                 end
             end
