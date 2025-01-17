@@ -12,6 +12,12 @@ module tage_table
 
         output logic prediction_o, tag_hit_o, new_entry_o,
         output logic [1:0] u_o
+
+        // Domain owner of the current request
+        , input domain_t domain_i
+        , input logic [31:0] targ_i
+        // Target address
+        , output logic [31:0] targ_o
     );
 
     // Prediction, tag, and useful tables
@@ -19,8 +25,14 @@ module tage_table
     logic [8:0] tag [2**`TAGE_IDX_WIDTH-1:0];
     logic [1:0] u   [2**`TAGE_IDX_WIDTH-1:0];
 
+    logic [31:0] targ [2**`TAGE_IDX_WIDTH-1:0];    
+    // Isolation state
+    domain_t isolation_state [2**`TAGE_IDX_WIDTH-1:0];
+
     logic [`TAGE_IDX_WIDTH-1:0] prev_idx;
     logic [8:0] prev_hash_tag;
+    logic [31:0] prev_targ;
+    domain_t prev_domain;
 
     logic [17:0] u_clear_ctr;
     logic u_clear_col;
@@ -46,7 +58,10 @@ module tage_table
             for (int i = 0; i < 2**`TAGE_IDX_WIDTH; i++) begin
                 ctr[i] = 3'b0;
                 tag[i] = 9'b0;
+                // ? Maybe not required since is being zeroed at alloc_i
                 u[i]   = 2'b0;
+                targ[i] = 32'b0;
+                isolation_state[i] = INIT;
             end
 
             u_clear_ctr = 0;
@@ -57,6 +72,8 @@ module tage_table
             u_o = 0;
             prev_idx = 0;
             prev_hash_tag = 0;
+            prev_targ = 0;
+            prev_domain = INIT;
         // end
     end else begin
 
@@ -65,6 +82,9 @@ module tage_table
             ctr[prev_idx] <= br_result_i ? `TAGE_WEAK_TAKEN : `TAGE_WEAK_NOT_TAKEN;
             tag[prev_idx] <= prev_hash_tag;
             u[prev_idx] <= 2'b0;
+            targ[prev_idx] <= prev_targ;
+            // Update isolation state
+            isolation_state[prev_idx] <= prev_domain;
         end
 
         if (dec_u_i && (u[prev_idx] != 2'b00))
@@ -87,11 +107,14 @@ module tage_table
                     u[prev_idx] <= u[prev_idx] - 1;
             end
         end
-        tag_hit_o <= (tag[hash_idx_i] == hash_tag_i);
+        tag_hit_o <= (tag[hash_idx_i] == hash_tag_i) && (isolation_state[hash_idx_i] == domain_i);
         prediction_o <= ctr[hash_idx_i][2];
+        targ_o <= targ[hash_idx_i];
         u_o <= u[hash_idx_i];
         prev_idx <= hash_idx_i;
         prev_hash_tag <= hash_tag_i;
+        prev_targ <= targ_i;
+        prev_domain <= domain_i;
 
         // Update useful clear counter
         if (u_clear_ctr == 2**18-1) begin

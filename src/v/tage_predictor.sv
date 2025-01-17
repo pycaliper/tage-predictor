@@ -13,6 +13,11 @@ module tage_predictor
         input logic br_result_i, correct_i,
         input logic [31:0] idx_i,
         output logic prediction_o
+
+        // Currently accessing domain
+        , input domain_t domain_i
+        // Target address
+        , output logic [31:0] targ_o
     );
 
     localparam T0 = 4'b0000;
@@ -30,7 +35,9 @@ module tage_predictor
     logic new_entry;
 
     logic [4:0] predictions;
+    logic [31:0] targ_predictions [4:0];
     logic pred, alt_pred;
+    logic [31:0] targ_pred;
     logic update_u;
     logic [3:0] providers;
     logic [4:0] alt_providers;
@@ -41,15 +48,17 @@ module tage_predictor
     logic [1:0] us [3:0];
     logic [3:0] allocs;
 
-    bht c_T0 (.clk_i, .rst_i, .br_result_i, .update_en_i(providers == 0), .idx_i(idx_i[`BHT_IDX_WIDTH-1:0]), .prediction_o(predictions[0]));
+    domain_t prev_domain;
+
+    bht c_T0 (.clk_i, .rst_i, .br_result_i, .update_en_i(providers == 0), .idx_i(idx_i[`BHT_IDX_WIDTH-1:0]), .prediction_o(predictions[0]), .domain_i(domain_i), .targ_i(idx_i), .targ_o(targ_predictions[0]));
     tage_table c_T1 (.clk_i, .rst_i, .br_result_i, .update_u_i(update_u), .dec_u_i(dec_us[0]), .alloc_i(allocs[0]), .provider_i(providers[0]), .hash_idx_i(hash_idxs[0]),
-                        .hash_tag_i(hash_tags[0]), .prediction_o(predictions[1]), .tag_hit_o(tag_hits[0]), .new_entry_o(new_entries[0]), .u_o(us[0]));
+                        .hash_tag_i(hash_tags[0]), .prediction_o(predictions[1]), .tag_hit_o(tag_hits[0]), .new_entry_o(new_entries[0]), .u_o(us[0]), .domain_i(domain_i), .targ_i(idx_i), .targ_o(targ_predictions[1]));
     tage_table c_T2 (.clk_i, .rst_i, .br_result_i, .update_u_i(update_u), .dec_u_i(dec_us[1]), .alloc_i(allocs[1]), .provider_i(providers[1]), .hash_idx_i(hash_idxs[1]),
-                        .hash_tag_i(hash_tags[1]), .prediction_o(predictions[2]), .tag_hit_o(tag_hits[1]), .new_entry_o(new_entries[1]), .u_o(us[1]));
+                        .hash_tag_i(hash_tags[1]), .prediction_o(predictions[2]), .tag_hit_o(tag_hits[1]), .new_entry_o(new_entries[1]), .u_o(us[1]), .domain_i(domain_i), .targ_i(idx_i), .targ_o(targ_predictions[2]));
     tage_table c_T3 (.clk_i, .rst_i, .br_result_i, .update_u_i(update_u), .dec_u_i(dec_us[2]), .alloc_i(allocs[2]), .provider_i(providers[2]), .hash_idx_i(hash_idxs[2]),
-                        .hash_tag_i(hash_tags[2]), .prediction_o(predictions[3]), .tag_hit_o(tag_hits[2]), .new_entry_o(new_entries[2]), .u_o(us[2]));
+                        .hash_tag_i(hash_tags[2]), .prediction_o(predictions[3]), .tag_hit_o(tag_hits[2]), .new_entry_o(new_entries[2]), .u_o(us[2]), .domain_i(domain_i), .targ_i(idx_i), .targ_o(targ_predictions[3]));
     tage_table c_T4 (.clk_i, .rst_i, .br_result_i, .update_u_i(update_u), .dec_u_i(dec_us[3]), .alloc_i(allocs[3]), .provider_i(providers[3]), .hash_idx_i(hash_idxs[3]),
-                        .hash_tag_i(hash_tags[3]), .prediction_o(predictions[4]), .tag_hit_o(tag_hits[3]), .new_entry_o(new_entries[3]), .u_o(us[3]));
+                        .hash_tag_i(hash_tags[3]), .prediction_o(predictions[4]), .tag_hit_o(tag_hits[3]), .new_entry_o(new_entries[3]), .u_o(us[3]), .domain_i(domain_i), .targ_i(idx_i), .targ_o(targ_predictions[4]));
 
     // initial begin
     //     ghist = 0;
@@ -68,12 +77,19 @@ module tage_predictor
                 tag_hits[1] ? predictions[2] :
                 tag_hits[0] ? predictions[1] : predictions[0];
 
+        targ_pred = tag_hits[3] ? targ_predictions[4] :
+                    tag_hits[2] ? targ_predictions[3] :
+                    tag_hits[1] ? targ_predictions[2] :
+                    tag_hits[0] ? targ_predictions[1] : targ_predictions[0];
+
         alt_tag_hits = providers ^ tag_hits;
         alt_providers = alt_tag_hits[3] ? 5'b10000 :
                         alt_tag_hits[2] ? 5'b01000 :
                         alt_tag_hits[1] ? 5'b00100 :
                         alt_tag_hits[0] ? 5'B00010 : 5'b00001;
         alt_pred = (alt_providers & predictions) != 0;
+
+
         
         // Calculate update useful counter signal
         update_u = (pred != alt_pred);
@@ -102,6 +118,7 @@ module tage_predictor
             prediction_o = pred;
         else
             prediction_o = alt_pred;
+        targ_o = targ_pred;
 
         // Entry allocation
         if (~correct_i) begin
@@ -179,6 +196,7 @@ module tage_predictor
         //phist = 0;
         alt_ctr = 0;
 
+        prev_domain = INIT;
     end else begin
     
         // Update ghist/phist, always a br for sim
@@ -192,6 +210,8 @@ module tage_predictor
             else if ((alt_pred != br_result_i) && alt_ctr != 4'b0)
                 alt_ctr <= alt_ctr - 1;
         end
+
+        prev_domain = domain_i;
     end
 
     end

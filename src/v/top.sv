@@ -11,6 +11,10 @@ module top
         input logic [31:0] idx_i,
         /* verilator lint_on UNUSED */
         output logic prediction_o
+
+        , input domain_t domain_i
+        , input [31:0] targ_i
+        , output logic [31:0] targ_o
     );
     /* verilator lint_off WIDTH */
     //assign prediction_o = `BR_TAKEN;
