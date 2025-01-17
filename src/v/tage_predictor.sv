@@ -14,6 +14,9 @@ module tage_predictor
         input logic [31:0] idx_i,
         output logic prediction_o
 
+`ifdef VERILOG
+        , input [31:0] nd
+`endif
         // Currently accessing domain
         , input domain_t domain_i
         // Target address
@@ -129,6 +132,7 @@ module tage_predictor
                     else begin
                         dec_us = 4'b0;
 
+`ifndef VERILOG
                         if (us[0] == 0 && us[1] == 0) begin
                             allocs = ({1'b0, $random()} < {1'b0, `PP_THRESHOLD}) ? T1 : T2;
                         end else if (us[0] == 0 && us[2] == 0) begin
@@ -143,6 +147,22 @@ module tage_predictor
                             allocs = ({1'b0, $random()} < {1'b0, `PP_THRESHOLD}) ? T3 : T4;
                         end else
                             allocs = (us[0] == 0) ? T1 : (us[1] == 0) ? T2 : (us[2] == 0) ? T3 : T4;
+`else
+                        if (us[0] == 0 && us[1] == 0) begin
+                            allocs = ({1'b0, nd} < {1'b0, `PP_THRESHOLD}) ? T1 : T2;
+                        end else if (us[0] == 0 && us[2] == 0) begin
+                            allocs = ({1'b0, nd} < {1'b0, `PP_THRESHOLD}) ? T1 : T3;
+                        end else if (us[0] == 0 && us[3] == 0) begin
+                            allocs = ({1'b0, nd} < {1'b0, `PP_THRESHOLD}) ? T1 : T4;
+                        end else if (us[1] == 0 && us[2] == 0) begin
+                            allocs = ({1'b0, nd} < {1'b0, `PP_THRESHOLD}) ? T2 : T3;
+                        end else if (us[1] == 0 && us[3] == 0) begin
+                            allocs = ({1'b0, nd} < {1'b0, `PP_THRESHOLD}) ? T2 : T4;
+                        end else if (us[2] == 0 && us[3] == 0) begin
+                            allocs = ({1'b0, nd} < {1'b0, `PP_THRESHOLD}) ? T3 : T4;
+                        end else
+                            allocs = (us[0] == 0) ? T1 : (us[1] == 0) ? T2 : (us[2] == 0) ? T3 : T4;
+`endif
                     end
                 end
                 T1: begin
@@ -151,6 +171,7 @@ module tage_predictor
                     else begin
                         dec_us = 4'b0;
 
+`ifndef VERILOG
                         if (us[1] == 0 && us[2] == 0) begin // T2 and T3 are free
                             allocs = ({1'b0, $random()} < {1'b0, `PP_THRESHOLD}) ? T2 : T3;
                         end else if (us[1] == 0 && us[3] == 0) begin // T2 and T4 are free
@@ -159,6 +180,16 @@ module tage_predictor
                             allocs = ({1'b0, $random()} < {1'b0, `PP_THRESHOLD}) ? T3 : T4;
                         end else
                             allocs = (us[1] == 0) ? T2 : (us[2] == 0) ? T3 : T4;
+`else
+                        if (us[1] == 0 && us[2] == 0) begin // T2 and T3 are free
+                            allocs = ({1'b0, nd} < {1'b0, `PP_THRESHOLD}) ? T2 : T3;
+                        end else if (us[1] == 0 && us[3] == 0) begin // T2 and T4 are free
+                            allocs = ({1'b0, nd} < {1'b0, `PP_THRESHOLD}) ? T2 : T4;
+                        end else if (us[2] == 0 && us[3] == 0) begin // T3 and T4 are free
+                            allocs = ({1'b0, nd} < {1'b0, `PP_THRESHOLD}) ? T3 : T4;
+                        end else
+                            allocs = (us[1] == 0) ? T2 : (us[2] == 0) ? T3 : T4;
+`endif
                     end
                 end
                 T2: begin
@@ -167,10 +198,17 @@ module tage_predictor
                     else begin
                         dec_us = 4'b0;
 
+`ifndef VERILOG
                         if (us[2] == 0 && us[3] == 0) begin // T3 and T4 are free
                             allocs = ({1'b0, $random()} < {1'b0, `PP_THRESHOLD}) ? T3 : T4;
                         end else
                             allocs = (us[2] == 0) ? T3 : T4;
+`else
+                        if (us[2] == 0 && us[3] == 0) begin // T3 and T4 are free
+                            allocs = ({1'b0, nd} < {1'b0, `PP_THRESHOLD}) ? T3 : T4;
+                        end else
+                            allocs = (us[2] == 0) ? T3 : T4;
+`endif
                     end
                 end
                 T3: begin

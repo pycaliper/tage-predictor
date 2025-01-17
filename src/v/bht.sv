@@ -38,7 +38,7 @@ module bht
     logic [`BHT_IDX_WIDTH-1:0] prev_idx;
     
     // BHT data
-    logic [1:0] bht_data [2**`BHT_IDX_WIDTH-1:0];
+    // logic [1:0] bht_data [2**`BHT_IDX_WIDTH-1:0];
 
     logic [1:0] bht_data_priv [2**`BHT_IDX_WIDTH-1:0];
     logic [1:0] bht_data_user [2**`BHT_IDX_WIDTH-1:0];
@@ -85,10 +85,11 @@ module bht
                     bht_targ_user[prev_idx] <= prev_targ;
                 end
             end else if(~br_result_i && (bht_data[prev_idx] != 2'b0)) begin
-                if (prev_domain == PRIV)
+                if (prev_domain == PRIV) begin
                     bht_data_priv[prev_idx] <= bht_data_priv[prev_idx] - 1;
-                else
+                end else begin
                     bht_data_user[prev_idx] <= bht_data_user[prev_idx] - 1;
+                end
             end
         end
 

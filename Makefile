@@ -1,31 +1,37 @@
-ifneq ($(words $(CURDIR)),1)
-	$(error Unsupported: GNU Make cannot build in directories containing spaces, build elsewhere: '$(CURDIR)')
-endif
 
-ifeq ($(VERILATOR_ROOT),)
-VERILATOR = verilator
-else
-export VERILATOR_ROOT
-VERILATOR = $(VERILATOR_ROOT)/bin/verilator
-endif
+# src/v/bht.sv
+# src/v/tage_predictor.sv
+# src/v/tage_table.sv
+# src/v/top.sv
 
-default:
-	@echo "--VERILATE -----------------"
-	$(VERILATOR) -Wall --cc --exe -Isrc/include -y src/v top.sv tb/top.cpp
-	@echo "--BUILD --------------------"
-	make -j -C obj_dir -f Vtop.mk Vtop
-	@echo "-- RUN ---------------------"
-	obj_dir/Vtop
-	@echo "-- DONE --------------------"
+SV_FILES=$(wildcard src/v/*.sv)
+SV_HDRS=$(wildcard src/v/*.svh)
 
-%:
-	@echo "--VERILATE -----------------"
-	$(VERILATOR) -Wall --cc --exe -Isrc/include -y src/v $@.sv tb/$@.cpp
-	@echo "--BUILD --------------------"
-	make -j -C obj_dir -f V$@.mk V$@
-	@echo "-- RUN ---------------------"
-	obj_dir/V$@
-	@echo "-- DONE --------------------"
+V_FILES=$(SV_FILES:src/v/%.sv=v/%.v)
+
+v/%.v: src/v/%.sv $(SV_HDRS)
+	sv2v -D VERILOG $< > $@
+
+btor/%.btor: v/%.v
+	yosys -p "read_verilog $<; proc; opt; memory -nomap; opt; dffunmap; clk2fflogic; write_btor $@"
+
+verilog: $(V_FILES)
+
+verilog_full_design: $(V_FILES)
+	yosys -p "read_verilog $^; hierarchy -top top; hierarchy -check; proc; opt; memory; flatten; opt; write_verilog v/full_design.v"
+# setundef -zero -undriven; 
+# opt_expr -mux_undef; opt;
+
+btor: $(SV_FILES:src/v/%.sv=btor/%.btor)
+
+# btor_full_design: $(V_FILES)
+# 	yosys -p "read_verilog $^; hierarchy -check; hierarchy -top top; flatten; proc; opt; memory -nomap; opt; clk2fflogic; write_btor btor/full_design.btor"
+
+btor_full_design: v/full_design.v
+	yosys -p "read_verilog $^; hierarchy -check; hierarchy -top top; proc; opt; memory; flatten; clk2fflogic; write_btor btor/full_design.btor"
+
 
 clean:
-	-rm -rf obj_dir *.log *.dmp *.vpd core
+	rm -f v/*.v btor/*.btor
+
+.PHONY: clean

@@ -1,0 +1,9 @@
+
+read_verilog -sv src/v/common_defines.svh
+
+read_verilog -sv src/v/bht.sv
+read_verilog -sv src/v/tage_predictor.sv
+read_verilog -sv src/v/tage_table.sv
+read_verilog -sv src/v/top.sv
+
+proc; opt; memory; opt;
