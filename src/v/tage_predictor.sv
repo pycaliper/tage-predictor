@@ -21,6 +21,7 @@ module tage_predictor
         , input domain_t domain_i
         // Target address
         , output logic [31:0] targ_o
+        , output domain_t prev_domain
     );
 
     localparam T0 = 4'b0000;
@@ -51,7 +52,7 @@ module tage_predictor
     logic [1:0] us [3:0];
     logic [3:0] allocs;
 
-    domain_t prev_domain;
+    // domain_t prev_domain;
 
     bht c_T0 (.clk_i, .rst_i, .br_result_i, .update_en_i(providers == 0), .idx_i(idx_i[`BHT_IDX_WIDTH-1:0]), .prediction_o(predictions[0]), .domain_i(domain_i), .targ_i(idx_i), .targ_o(targ_predictions[0]));
     tage_table c_T1 (.clk_i, .rst_i, .br_result_i, .update_u_i(update_u), .dec_u_i(dec_us[0]), .alloc_i(allocs[0]), .provider_i(providers[0]), .hash_idx_i(hash_idxs[0]),

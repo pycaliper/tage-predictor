@@ -17,6 +17,7 @@ module top
         , input domain_t domain_i
         , input [31:0] targ_i
         , output logic [31:0] targ_o
+        , output domain_t prev_domain
     );
     /* verilator lint_off WIDTH */
     //assign prediction_o = `BR_TAKEN;
@@ -31,6 +32,7 @@ module top
         .prediction_o(prediction_o),
 `ifdef VERILOG
         .nd(nd),
+        .prev_domain(prev_domain),
 `endif
         .domain_i(domain_i),
         .targ_o(targ_o)

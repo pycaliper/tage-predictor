@@ -4,9 +4,12 @@
 `define BR_TAKEN        1'b1
 `define BR_NOT_TAKEN    1'b0
 
+`ifndef PARAMV
 `define BHT_IDX_WIDTH       6
 
 `define TAGE_IDX_WIDTH      (`BHT_IDX_WIDTH - 2)
+`endif
+
 `define TAGE_WEAK_TAKEN     3'b100
 `define TAGE_WEAK_NOT_TAKEN 3'b011
 
